@@ -3,24 +3,24 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Room</title>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 <script src="firebase.js"></script>
 
+<title>Room</title>
+
 <style>
 body{
-margin:0;
-font-family:system-ui;
 background:#0b0516;
 color:white;
+font-family:system-ui;
 text-align:center;
 padding:20px;
 }
 button{
 padding:10px;
-margin:8px;
+margin:5px;
 border:none;
 border-radius:8px;
 background:#7f13ec;
@@ -28,23 +28,21 @@ color:white;
 font-weight:bold;
 cursor:pointer;
 }
-.correct{background:#16a34a !important;}
-.wrong{background:#dc2626 !important;}
 </style>
 </head>
 
 <body>
 
-<h3>קוד חדר: <span id="code"></span></h3>
+<h3>קוד חדר: <span id="roomCode"></span></h3>
 
 <div id="waiting">
 <h4>ממתינים לשחקנים...</h4>
 <ul id="players"></ul>
-<button id="startBtn" onclick="startGame()" style="display:none;">התחל</button>
+<button id="startBtn" onclick="startGame()" style="display:none;">התחל משחק</button>
 </div>
 
 <div id="game" style="display:none;">
-<h3 id="question"></h3>
+<h3>באיזו שנה יצא השיר?</h3>
 <p>⏱ <span id="timer"></span></p>
 <div id="answers"></div>
 </div>
@@ -53,14 +51,13 @@ cursor:pointer;
 
 const params=new URLSearchParams(window.location.search);
 const roomId=params.get("room");
-const myId=localStorage.getItem("deviceId");
+document.getElementById("roomCode").innerText=roomId;
 
-document.getElementById("code").innerText=roomId;
+const myId=localStorage.getItem("deviceId");
+const roomRef=firebase.database().ref("rooms/"+roomId);
 
 let isHost=false;
-let timerInterval;
-
-const roomRef=firebase.database().ref("rooms/"+roomId);
+let interval;
 
 roomRef.on("value",snap=>{
 
@@ -70,17 +67,6 @@ if(!room) return;
 isHost=(room.host===myId);
 
 if(room.status==="waiting"){
-showWaiting(room);
-}
-
-if(room.status==="playing"){
-showGame(room);
-}
-
-});
-
-function showWaiting(room){
-
 document.getElementById("waiting").style.display="block";
 document.getElementById("game").style.display="none";
 
@@ -89,61 +75,41 @@ list.innerHTML="";
 
 Object.values(room.players||{}).forEach(p=>{
 const li=document.createElement("li");
-li.innerText=p.nickname+" ("+p.score+")";
+li.innerText=p.name+" ("+p.score+")";
 list.appendChild(li);
 });
 
 if(isHost){
 document.getElementById("startBtn").style.display="inline-block";
 }
+
 }
+
+if(room.status==="playing"){
+document.getElementById("waiting").style.display="none";
+document.getElementById("game").style.display="block";
+document.getElementById("timer").innerText=room.timer;
+
+if(room.timer===0){
+clearInterval(interval);
+}
+}
+
+});
 
 function startGame(){
 roomRef.update({
 status:"playing",
 timer:10
 });
-nextQuestion();
-}
-
-function showGame(room){
-
-document.getElementById("waiting").style.display="none";
-document.getElementById("game").style.display="block";
-
-if(room.timer>0){
-document.getElementById("timer").innerText=room.timer;
-}else{
-clearInterval(timerInterval);
-}
-
-if(room.question){
-renderQuestion(room.question);
-}
-}
-
-function nextQuestion(){
-
-const songs=["1985","1992","2001","2010"];
-const correct=songs[Math.floor(Math.random()*songs.length)];
-
-roomRef.update({
-question:{
-text:"באיזה שנה יצא השיר?",
-correct:correct,
-options:songs.sort(()=>Math.random()-0.5)
-},
-timer:10
-});
-
 startTimer();
 }
 
 function startTimer(){
 
-clearInterval(timerInterval);
+clearInterval(interval);
 
-timerInterval=setInterval(()=>{
+interval=setInterval(()=>{
 
 roomRef.child("timer").transaction(current=>{
 if(current>0) return current-1;
@@ -151,28 +117,7 @@ return current;
 });
 
 },1000);
-}
 
-function renderQuestion(q){
-
-document.getElementById("question").innerText=q.text;
-
-const container=document.getElementById("answers");
-container.innerHTML="";
-
-q.options.forEach(opt=>{
-const btn=document.createElement("button");
-btn.innerText=opt;
-
-btn.onclick=()=>{
-roomRef.child("players/"+myId+"/score").transaction(s=>{
-if(opt===q.correct) return (s||0)+10;
-return s;
-});
-};
-
-container.appendChild(btn);
-});
 }
 
 </script>
