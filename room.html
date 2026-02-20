@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<title>Room</title>
+
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 <script src="firebase.js"></script>
-
-<title>Room</title>
 
 <style>
 body{
@@ -42,15 +42,18 @@ cursor:pointer;
 </div>
 
 <div id="game" style="display:none;">
-<h3>באיזו שנה יצא השיר?</h3>
-<p>⏱ <span id="timer"></span></p>
-<div id="answers"></div>
+<h3>⏱ זמן: <span id="timer"></span></h3>
 </div>
 
 <script>
 
 const params=new URLSearchParams(window.location.search);
 const roomId=params.get("room");
+
+if(!roomId){
+window.location.href="/gayztrivia/";
+}
+
 document.getElementById("roomCode").innerText=roomId;
 
 const myId=localStorage.getItem("deviceId");
@@ -67,6 +70,7 @@ if(!room) return;
 isHost=(room.host===myId);
 
 if(room.status==="waiting"){
+
 document.getElementById("waiting").style.display="block";
 document.getElementById("game").style.display="none";
 
@@ -93,6 +97,7 @@ document.getElementById("timer").innerText=room.timer;
 if(room.timer===0){
 clearInterval(interval);
 }
+
 }
 
 });
