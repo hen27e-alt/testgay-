@@ -3,50 +3,46 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lobby</title>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 <script src="firebase.js"></script>
 
+<title>Lobby</title>
+
 <style>
 body{
-margin:0;
-font-family:system-ui;
 background:#0b0516;
 color:white;
+font-family:system-ui;
 text-align:center;
 padding:40px;
 }
-button{
-padding:12px 20px;
+input,button{
+padding:10px;
 margin:10px;
+border-radius:8px;
 border:none;
-border-radius:10px;
+}
+button{
 background:#7f13ec;
 color:white;
 font-weight:bold;
 cursor:pointer;
-}
-input{
-padding:10px;
-border-radius:8px;
-border:none;
-margin:5px;
 }
 </style>
 </head>
 
 <body>
 
-<h2>GAYS TRIVIA – MULTI</h2>
+<h2>🎮 GAYS TRIVIA</h2>
 
 <input id="name" placeholder="השם שלך"><br>
 <button onclick="createRoom()">צור חדר</button>
 
 <br><br>
 
-<input id="joinCode" placeholder="קוד חדר"><br>
+<input id="code" placeholder="קוד חדר"><br>
 <button onclick="joinRoom()">הצטרף</button>
 
 <script>
@@ -69,45 +65,41 @@ function createRoom(){
 const name=document.getElementById("name").value;
 if(!name) return alert("הכנס שם");
 
-localStorage.setItem("nickname",name);
 const id=getId();
-const code=randomCode();
+const room=randomCode();
 
-firebase.database().ref("rooms/"+code).set({
+firebase.database().ref("rooms/"+room).set({
 host:id,
-status:"waiting",
-questionIndex:0,
-timer:0
+status:"waiting"
 });
 
-firebase.database().ref("rooms/"+code+"/players/"+id).set({
-nickname:name,
+firebase.database().ref("rooms/"+room+"/players/"+id).set({
+name:name,
 score:0
 });
 
-window.location.href="room.html?room="+code;
+window.location.href="./room.html?room="+room;
 }
 
 function joinRoom(){
 
 const name=document.getElementById("name").value;
-const code=document.getElementById("joinCode").value;
+const room=document.getElementById("code").value;
+if(!name || !room) return alert("חסר נתונים");
 
-if(!name || !code) return alert("חסר שם או קוד");
-
-localStorage.setItem("nickname",name);
 const id=getId();
 
-firebase.database().ref("rooms/"+code).once("value").then(snap=>{
+firebase.database().ref("rooms/"+room).once("value").then(snap=>{
 if(!snap.exists()) return alert("חדר לא קיים");
 
-firebase.database().ref("rooms/"+code+"/players/"+id).set({
-nickname:name,
+firebase.database().ref("rooms/"+room+"/players/"+id).set({
+name:name,
 score:0
 });
 
-window.location.href="room.html?room="+code;
+window.location.href="./room.html?room="+room;
 });
+
 }
 
 </script>
